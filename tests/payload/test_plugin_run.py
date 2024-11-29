@@ -3,7 +3,7 @@ import importlib.util
 import os
 from typing import Type
 import sys
-
+import logging.config
 import pytest
 from pathlib import Path
 
@@ -13,9 +13,10 @@ from selenium.webdriver import Chrome
 from selenium.webdriver.ie.webdriver import WebDriver
 
 from tests.config.fixtures import fix_plugin_config, project_config
-from tests.payload.fixtures import execute_timeout
-from s3p_sdk.types import S3PRefer, S3PDocument, S3PPlugin
+# from tests.payload.fixtures import execute_timeout
+from s3p_sdk.types import S3PRefer, S3PDocument
 from s3p_sdk.plugin.types import SOURCE
+
 
 
 @pytest.mark.payload_set
@@ -25,7 +26,7 @@ class TestPayloadRun:
     def chrome_driver(self) -> WebDriver:
         options = webdriver.Options()
 
-        options.add_argument('--headless')
+        # options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('window-size=1920x1080')
@@ -35,12 +36,8 @@ class TestPayloadRun:
         driver.quit()
 
     @pytest.fixture(scope="class")
-    def fix_s3pRefer(self) -> S3PRefer:
+    def fix_s3pRefer(self):
         return S3PRefer(1, 'test-refer', SOURCE, None)
-
-    @pytest.fixture(scope="class")
-    def fix_s3pPlugin(self) -> S3PPlugin:
-        return S3PPlugin(1, 'unittests/repo/1', True, None, None, SOURCE, "3.0")
 
     @pytest.fixture(scope="module", autouse=True)
     def fix_payload(self, project_config, fix_plugin_config) -> Type[S3PParserBase]:
@@ -60,14 +57,15 @@ class TestPayloadRun:
         assert issubclass(parser_class, S3PParserBase), f"{class_name} is not a subclass of S3PParserBase."
         return parser_class
 
-    def run_payload(self, payload: Type[S3PParserBase], _plugin: S3PPlugin, driver: WebDriver, refer: S3PRefer, max_document: int,
+    def run_payload(self, payload: Type[S3PParserBase], driver: WebDriver, refer: S3PRefer, max_document: int,
                     timeout: int = 2):
         # !WARNING Требуется изменить путь до актуального парсера плагина
-        from src.s3_platform_plugin_template.template_payload import MyTemplateParser
-        if isinstance(payload, type(MyTemplateParser)):
-            _payload = payload(refer=refer, plugin=_plugin, web_driver=driver, max_count_documents=max_document, last_document=None)
+        logging.config.fileConfig(r'C:\Users\Artyom\Downloads\Проверка плагинов\s3p-plugin-parser-EMVCo\tests\dev.logger.conf')
+        from src.s3p_plugin_parser_emvco.emvco import EMVCo
+        if isinstance(payload, type(EMVCo)):
+            _payload = payload(refer=refer, web_driver=driver, max_count_documents=max_document, last_document=None)
 
-            @execute_timeout(timeout)
+            # @execute_timeout(timeout)
             def execute() -> tuple[S3PDocument, ...]:
                 return _payload.content()
 
@@ -75,22 +73,23 @@ class TestPayloadRun:
         else:
             assert False, "Тест проверяет payload плагина"
 
-    def test_run_with_0_docs_restriction(self, chrome_driver, fix_s3pRefer, fix_payload, fix_s3pPlugin):
+    def test_run_with_0_docs_restriction(self, chrome_driver, fix_s3pRefer, fix_payload):
         # !WARNING Обновить тест для актуального парсера
         max_docs = 10
-        docs = self.run_payload(fix_payload, fix_s3pPlugin, chrome_driver, fix_s3pRefer, max_docs)
+        docs = self.run_payload(fix_payload, chrome_driver, fix_s3pRefer, max_docs)
+        print(docs)
         assert len(docs) <= max_docs
 
-    def test_return_types(self, chrome_driver, fix_s3pRefer, fix_payload, fix_s3pPlugin):
+    def test_return_types(self, chrome_driver, fix_s3pRefer, fix_payload):
         # !WARNING Обновить тест для актуального парсера
         max_docs = 10
-        docs = self.run_payload(fix_payload, fix_s3pPlugin, chrome_driver, fix_s3pRefer, max_docs)
+        docs = self.run_payload(fix_payload, chrome_driver, fix_s3pRefer, max_docs)
         assert isinstance(docs, tuple) and all([isinstance(el, S3PDocument) for el in docs])
 
-    def test_returned_parameters_are_sufficient(self, chrome_driver, fix_s3pRefer, fix_payload, fix_s3pPlugin):
+    def test_returned_parameters_are_sufficient(self, chrome_driver, fix_s3pRefer, fix_payload):
         # !WARNING Обновить тест для актуального парсера
         max_docs = 10
-        docs = self.run_payload(fix_payload, fix_s3pPlugin, chrome_driver, fix_s3pRefer, max_docs)
+        docs = self.run_payload(fix_payload, chrome_driver, fix_s3pRefer, max_docs)
         for el in docs:
             assert el.title is not None and isinstance(el.title, str)
             assert el.link is not None and isinstance(el.link, str)
