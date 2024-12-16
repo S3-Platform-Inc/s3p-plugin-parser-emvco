@@ -43,7 +43,7 @@ class TestPayloadRun:
 
     @pytest.fixture(scope="module", autouse=True)
     def fix_payload(self, project_config, fix_plugin_config) -> Type[S3PParserBase]:
-        MODULE_NAME: str = 's3p_test_plugin_payload'
+        MODULE_NAME: str = 's3p_plugin_parser_emvco'
         """Загружает конфигурацию из config.py файла по динамическому пути на основании конфигурации"""
         payload_path = Path(project_config.root) / 'src' / project_config.name / fix_plugin_config.payload.file
         assert os.path.exists(payload_path)
