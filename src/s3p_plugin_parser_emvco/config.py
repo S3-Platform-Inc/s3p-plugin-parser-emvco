@@ -6,6 +6,7 @@ from s3p_sdk.plugin.config import (
     TaskConfig,
     trigger,
     MiddlewareConfig,
+    RestrictionsConfig,
     modules,
     payload
 )
@@ -19,7 +20,8 @@ config = PluginConfig(
         reference='emvco',         # уникальное имя источника
         type=SOURCE,                            # Тип источника (SOURCE, ML, PIPELINE)
         files=['emvco.py', ],        # Список файлов, которые будут использоваться в плагине (эти файлы будут сохраняться в платформе)
-        is_localstorage=False
+        is_localstorage=False,
+        restrictions=RestrictionsConfig(50, None, None, None)
     ),
     task=TaskConfig(
         trigger=trigger.TriggerConfig(
@@ -42,9 +44,6 @@ config = PluginConfig(
             method='content',
             params=[
                 payload.entry.ModuleParamConfig(key='driver', module_name=WebDriver, bus=True),
-                payload.entry.ConstParamConfig(key='max_count_documents', value=50),
-                # payload.entry.ConstParamConfig(key='url',
-                #                                value='url to the source page'),
             ]
         )
     )
