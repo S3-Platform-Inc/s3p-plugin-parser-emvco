@@ -1,8 +1,10 @@
 import datetime
 import time
 import dateparser
+from s3p_sdk.exceptions.parser import S3PPluginParserOutOfRestrictionException, S3PPluginParserFinish
 from s3p_sdk.plugin.payloads.parsers import S3PParserBase
 from s3p_sdk.types import S3PRefer, S3PDocument, S3PPlugin, S3PPluginRestrictions
+from s3p_sdk.types.plugin_restrictions import FROM_DATE
 from selenium.common import NoSuchElementException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
@@ -138,7 +140,13 @@ class EMVCo(S3PParserBase):
                     loaded=None,
                 )
 
-                self._find(doc)
+                try:
+                    self._find(doc)
+                except S3PPluginParserOutOfRestrictionException as e:
+                    if e.restriction == FROM_DATE:
+                        self.logger.debug(f'Document is out of date range `{self._restriction.from_date}`')
+                        raise S3PPluginParserFinish(self._plugin,
+                                                    f'Document is out of date range `{self._restriction.from_date}`', e)
 
             try:
                 pagination_arrow = self._driver.find_element(By.XPATH, '//a[contains(@data-direction,\'next\')]')
