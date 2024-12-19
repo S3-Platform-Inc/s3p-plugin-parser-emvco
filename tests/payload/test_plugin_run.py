@@ -59,12 +59,12 @@ class TestPayloadRun:
         assert issubclass(parser_class, S3PParserBase), f"{class_name} is not a subclass of S3PParserBase."
         return parser_class
 
-    def run_payload(self, payload: Type[S3PParserBase], _plugin: S3PPlugin, driver: WebDriver, refer: S3PRefer, max_document: int,
+    def run_payload(self, payload: Type[S3PParserBase], _plugin: S3PPlugin, driver: WebDriver, refer: S3PRefer, restrictions: S3PPluginRestrictions,
                     timeout: int = 2):
         # !WARNING Требуется изменить путь до актуального парсера плагина
         from src.s3p_plugin_parser_emvco.emvco import EMVCo
         if isinstance(payload, type(EMVCo)):
-            _payload = payload(refer=refer, plugin=_plugin, restrictions=S3PPluginRestrictions(max_document, None, None, None), web_driver=driver)
+            _payload = payload(refer=refer, plugin=_plugin, restrictions=restrictions, web_driver=driver)
 
             # @execute_timeout(timeout)
             def execute() -> tuple[S3PDocument, ...]:
@@ -87,7 +87,7 @@ class TestPayloadRun:
 
         """
         max_docs = 4
-        docs = self.run_payload(fix_payload, fix_s3pPlugin, chrome_driver, fix_s3pRefer, max_docs, 100)
+        docs = self.run_payload(fix_payload, fix_s3pPlugin, chrome_driver, fix_s3pRefer,  S3PPluginRestrictions(max_docs, None, None, None), 100)
 
         # 1. Количество материалов должно быть не меньше параметра максимального числа материалов.
         assert len(docs) == max_docs, f"Payload вернул {len(docs)} материалов. А должен был {max_docs}"
@@ -102,3 +102,9 @@ class TestPayloadRun:
             assert el.published is not None and isinstance(el.published, datetime.datetime), f"Документ {el} должен обязательно содержать ключевое поле published"
             assert el.hash
 
+    def test_date_restrictions(self, chrome_driver, fix_s3pRefer, fix_payload, fix_s3pPlugin):
+        _boundary_date = datetime.datetime(2024, 12, 17)
+        docs = self.run_payload(fix_payload, fix_s3pPlugin, chrome_driver, fix_s3pRefer, S3PPluginRestrictions(None, None, _boundary_date, None), 100)
+
+        for doc in docs:
+            assert doc.published >= _boundary_date, f"The {doc.to_logging} must meet the restriction (older than {_boundary_date})"

@@ -21,7 +21,12 @@ config = PluginConfig(
         type=SOURCE,                            # Тип источника (SOURCE, ML, PIPELINE)
         files=['emvco.py', ],        # Список файлов, которые будут использоваться в плагине (эти файлы будут сохраняться в платформе)
         is_localstorage=False,
-        restrictions=RestrictionsConfig(50, None, None, None)
+        restrictions=RestrictionsConfig(
+            maximum_materials=None,
+            to_last_material=None,
+            from_date=datetime.datetime(2024, 8, 1),
+            to_date=None,
+        )
     ),
     task=TaskConfig(
         trigger=trigger.TriggerConfig(
@@ -32,8 +37,7 @@ config = PluginConfig(
     middleware=MiddlewareConfig(
         modules=[
             modules.TimezoneSafeControlConfig(order=1, is_critical=True),
-            modules.FilterOnlyNewDocumentWithDB(order=2, is_critical=True),
-            modules.SaveDocument(order=3, is_critical=True),
+            modules.SaveOnlyNewDocuments(order=2, is_critical=True),
         ],
         bus=None,
     ),
