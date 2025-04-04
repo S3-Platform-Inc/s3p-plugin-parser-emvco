@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "s3-platform-plugin-template"
-version = "0.3.0"
+name = "s3p-plugin-parser-emvco"
+version = "0.3.12dev8"
 description = "A repository that provides a pure template to make it easier to create a new plugin project"
 authors = ["CuberHuber, Roman Lupashko <lupashcko.rom@yandex.ru>"]
 readme = "readme.md"
