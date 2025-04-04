@@ -2,7 +2,6 @@ from typing import Type
 
 import pytest
 
-# TODO: Указать путь до класса плагина
 from src.s3p_plugin_parser_emvco.emvco import EMVCo as imported_payload_class
 
 
