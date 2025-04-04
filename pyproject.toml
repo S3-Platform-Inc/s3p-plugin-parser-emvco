@@ -7,7 +7,7 @@ readme = "readme.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-s3p-sdk = "0.2.12.dev8"
+s3p-sdk = "0.2.13"
 dateparser = "^1.2.0"
 
 
