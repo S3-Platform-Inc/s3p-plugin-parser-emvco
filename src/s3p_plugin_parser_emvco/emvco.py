@@ -1,14 +1,12 @@
-import datetime
 import time
+
 import dateparser
 from s3p_sdk.exceptions.parser import S3PPluginParserOutOfRestrictionException, S3PPluginParserFinish
 from s3p_sdk.plugin.payloads.parsers import S3PParserBase
 from s3p_sdk.types import S3PRefer, S3PDocument, S3PPlugin, S3PPluginRestrictions
 from s3p_sdk.types.plugin_restrictions import FROM_DATE
-from selenium.common import NoSuchElementException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
 
@@ -26,10 +24,14 @@ class EMVCo(S3PParserBase):
 
     HOST = "https://www.emvco.com/specifications/"
 
-    def __init__(self, refer: S3PRefer, plugin: S3PPlugin, restrictions: S3PPluginRestrictions, web_driver: WebDriver):
+    def __init__(self,
+                 refer: S3PRefer,
+                 plugin: S3PPlugin,
+                 restrictions: S3PPluginRestrictions,
+                 web_driver: WebDriver  # TODO: отдельный модуль.
+                 ):
         super().__init__(refer, plugin, restrictions)
 
-        # Тут должны быть инициализированы свойства, характерные для этого парсера. Например: WebDriver
         self._driver = web_driver
         self._wait = WebDriverWait(self._driver, timeout=20)
         ...
