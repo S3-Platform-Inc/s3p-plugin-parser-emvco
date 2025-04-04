@@ -6,9 +6,8 @@ from s3p_sdk.plugin.config import (
     TaskConfig,
     trigger,
     MiddlewareConfig,
-    RestrictionsConfig,
     modules,
-    payload
+    payload, RestrictionsConfig
 )
 from s3p_sdk.plugin.types import SOURCE
 from s3p_sdk.module import (
@@ -24,22 +23,25 @@ config = PluginConfig(
         restrictions=RestrictionsConfig(
             maximum_materials=50,
             to_last_material=None,
-            from_date=datetime.datetime(2024, 8, 1),
+            from_date=datetime.datetime(2025, 1, 1),
             to_date=None,
         )
     ),
     task=TaskConfig(
         trigger=trigger.TriggerConfig(
             type=trigger.SCHEDULE,
-            interval=datetime.timedelta(days=1),    # Интервал перезапуска плагина
+            interval=datetime.timedelta(days=4),    # Интервал перезапуска плагина
         )
     ),
     middleware=MiddlewareConfig(
         modules=[
             modules.TimezoneSafeControlConfig(order=1, is_critical=True),
-            modules.DownloadDocumentsAssetWithSelenium(order=2, is_critical=True),
-            modules.UploadToS3(order=3, is_critical=True),
-            modules.SaveOnlyNewDocuments(order=4, is_critical=True),
+            modules.FilterOnlyNewDocumentWithDB(order=2, is_critical=True),
+            modules.CutJunkCharactersFromDocumentTextConfig(order=3, is_critical=True,
+                                                            p_fields=['abstract']),
+            modules.DownloadDocumentsAssetWithSelenium(order=4, is_critical=True),
+            modules.UploadToS3(order=5, is_critical=True),
+            modules.SaveDocument(order=6, is_critical=True),
         ],
         bus=None,
     ),
@@ -49,8 +51,8 @@ config = PluginConfig(
         entry=payload.entry.EntryConfig(
             method='content',
             params=[
-                payload.entry.ModuleParamConfig(key='driver', module_name=WebDriver, bus=True),
-            ]
+                payload.entry.ModuleParamConfig(key='web_driver', module_name=WebDriver, bus=True),
+            ] # Подробнее можно почитать [тут](./readme.md#пример-конфигурации-параметров-запуска-плагина
         )
     )
 )
