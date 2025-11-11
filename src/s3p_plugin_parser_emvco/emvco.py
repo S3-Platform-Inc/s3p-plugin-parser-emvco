@@ -8,6 +8,7 @@ from s3p_sdk.types.plugin_restrictions import FROM_DATE
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from datetime import datetime
 
 
 class EMVCo(S3PParserBase):
@@ -34,7 +35,6 @@ class EMVCo(S3PParserBase):
 
         self._driver = web_driver
         self._wait = WebDriverWait(self._driver, timeout=20)
-        ...
 
     def _parse(self):
 
@@ -56,6 +56,7 @@ class EMVCo(S3PParserBase):
                     date_text = element.find_element(By.CLASS_NAME, 'published').text
                     date = dateparser.parse(date_text)
                     web_link = element.get_attribute('data-post-link')
+                    assert isinstance(title, str) and isinstance(date, datetime) and isinstance(web_link, str)
                 except Exception as e:
                     self.logger.exception(f'Не удалось извлечь обязательные поля title, link, published. error: {e}')
                     continue
@@ -64,19 +65,19 @@ class EMVCo(S3PParserBase):
                     version = element.find_element(By.CLASS_NAME, 'version').text
                 except:
                     self.logger.exception('Не удалось извлечь version')
-                    version = ' '
+                    version = None
 
                 try:
                     tech = element.find_element(By.CLASS_NAME, 'tech-cat').text
                 except:
                     self.logger.exception('Не удалось извлечь tech')
-                    tech = ' '
+                    tech = None
 
                 try:
                     doc_type = element.find_element(By.CLASS_NAME, 'spec-cat').text
                 except:
                     self.logger.exception('Не удалось извлечь doc_type')
-                    doc_type = ' '
+                    doc_type = None
 
 
                 # Новый документ
@@ -98,12 +99,15 @@ class EMVCo(S3PParserBase):
                 )
 
                 try:
+                    doc.loaded = datetime.now()
                     self._find(doc)
                 except S3PPluginParserOutOfRestrictionException as e:
                     if e.restriction == FROM_DATE:
                         self.logger.debug(f'Document is out of date range `{self._restriction.from_date}`')
                         raise S3PPluginParserFinish(self._plugin,
                                                     f'Document is out of date range `{self._restriction.from_date}`', e)
+                except S3PPluginParserFinish as e:
+                    raise e
 
             try:
                 pagination_arrow = self._driver.find_element(By.XPATH, '//a[contains(@data-direction,\'next\')]')
